@@ -109,7 +109,7 @@ Include: definition, key points, real-world example, and common exam question on
 router.post("/study-plan", protect, async (req, res) => {
   try {
     const user = req.user;
-    const { examDate, weakTopics } = req.body;
+    const { startDate, examDate, weakTopics } = req.body;
 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -131,11 +131,12 @@ router.post("/study-plan", protect, async (req, res) => {
             content: `Create a study plan for a student with these details:
 - Subjects: ${user.subjects?.join(", ") || "DSA, OS, DBMS, CN, AI"}
 - Daily study goal: ${user.studyGoalHours || 5} hours
+- Start date: ${startDate || "today"}
 - Exam date: ${examDate || "in 2 weeks"}
 - Weak topics: ${weakTopics?.join(", ") || "not specified"}
 - Current accuracy: ${user.stats?.totalQuestions > 0 ? Math.round((user.stats.totalCorrect / user.stats.totalQuestions) * 100) : 0}%
 
-Provide a day-by-day study plan with topics and time allocation.`,
+Provide a day-by-day study plan from the start date to the exam date with topics and time allocation.`,
           },
         ],
       }),

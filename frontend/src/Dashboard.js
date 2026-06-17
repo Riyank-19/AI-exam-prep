@@ -8,17 +8,18 @@ import {
   CategoryScale, LinearScale, BarElement,
   ArcElement, Tooltip, Legend,
 } from "chart.js";
-import { apiDashboard, apiGenerateQuiz, getUser, clearAuth } from "./api";
+import { apiDashboard, getUser, clearAuth } from "./api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 // Sidebar navigation items
 const NAV = [
-  { to: "/dashboard", icon: "🏠", label: "Dashboard" },
-  { to: "/practice",  icon: "🤖", label: "AI Practice" },
-  { to: "/subjects",  icon: "📚", label: "Subjects" },
-  { to: "/analytics", icon: "📊", label: "Analytics" },
-  { to: "/settings",  icon: "⚙️", label: "Settings" },
+  { to: "/dashboard",  icon: "🏠", label: "Dashboard" },
+  { to: "/practice",   icon: "🤖", label: "AI Practice" },
+  { to: "/subjects",   icon: "📚", label: "Subjects" },
+  { to: "/analytics",  icon: "📊", label: "Analytics" },
+  { to: "/pdf-upload", icon: "📄", label: "PDF Upload" },
+  { to: "/settings",   icon: "⚙️", label: "Settings" },
 ];
 
 function Dashboard() {
@@ -27,9 +28,6 @@ function Dashboard() {
 
   const [dashData,    setDashData]    = useState(null);
   const [loading,     setLoading]     = useState(true);
-  const [quizTopic,   setQuizTopic]   = useState("");
-  const [quizLoading, setQuizLoading] = useState(false);
-  const [quizMsg,     setQuizMsg]     = useState("");
 
   // Formatted date
   const today = new Date().toLocaleDateString("en-US", {
@@ -45,26 +43,6 @@ function Dashboard() {
   }, [navigate]);
 
   const handleLogout = () => { clearAuth(); navigate("/login"); };
-
-  const handleGenerateQuestions = async () => {
-    if (!quizTopic.trim()) return;
-    setQuizLoading(true);
-    setQuizMsg("");
-    try {
-      const subject = ["DSA","OS","DBMS","CN","AI"].find((s) =>
-        quizTopic.toUpperCase().includes(s)
-      ) || "DSA";
-      const data = await apiGenerateQuiz(subject, quizTopic, 5);
-      setQuizMsg(data.questions
-        ? `✅ ${data.questions.length} questions generated! Head to AI Practice.`
-        : data.message || "Generation failed ❌"
-      );
-    } catch {
-      setQuizMsg("Error generating questions ❌");
-    } finally {
-      setQuizLoading(false);
-    }
-  };
 
   // Stats from backend or zeros
   const stats     = dashData?.stats     || { testsTaken: 0, accuracy: 0, studyHours: 0, streak: 0 };
@@ -225,24 +203,7 @@ function Dashboard() {
 
             {/* ── LOWER GRID ── */}
             <div className="lower-grid">
-              {/* AI Generator */}
-              <div className="ai-box">
-                <h2>🤖 AI Question Generator</h2>
-                <p>Enter any topic to instantly generate practice MCQs using Groq AI.</p>
-                <div className="ai-input-row">
-                  <input
-                    type="text"
-                    placeholder="e.g. Deadlock, SQL Joins, Binary Trees…"
-                    value={quizTopic}
-                    onChange={(e) => setQuizTopic(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleGenerateQuestions()}
-                  />
-                  <button onClick={handleGenerateQuestions} disabled={quizLoading}>
-                    {quizLoading ? "…" : "Generate"}
-                  </button>
-                </div>
-                {quizMsg && <p className="ai-result">{quizMsg}</p>}
-              </div>
+
 
               {/* Recent Activity */}
               <div className="activity">
@@ -282,47 +243,48 @@ function Dashboard() {
 
             {/* ── QUICK ACTIONS ── */}
             <div className="quick-actions">
-              <Link to="/practice" className="action-btn primary">⚡ Start AI Chat</Link>
-              <Link to="/subjects" className="action-btn">📝 Practice Quiz</Link>
-              <Link to="/analytics" className="action-btn">📊 View Analytics</Link>
-              <Link to="/settings" className="action-btn">📄 Upload Notes</Link>
+              <Link to="/practice"   className="action-btn primary">⚡ Start AI Chat</Link>
+              <Link to="/subjects"   className="action-btn">📝 Practice Quiz</Link>
+              <Link to="/analytics"  className="action-btn">📊 View Analytics</Link>
+              <Link to="/pdf-upload" className="action-btn">📄 Upload PDF</Link>
             </div>
 
-            {/* ── BOTTOM GRID ── */}
-            <div className="bottom-grid">
-              {/* Mock test card */}
-              <div className="mock-test">
-                <h2>📋 Mock Exam Ready</h2>
-                <p>Full Length Mock Exam</p>
-                <p style={{ color: "#9ca3af", fontSize: 12, marginTop: 4 }}>All 5 subjects · 50 questions · 90 min</p>
-                <Link to="/subjects" className="start-btn">Start Exam →</Link>
-              </div>
-
-              {/* Weak topics */}
-              <div className="weak-topics">
-                <h2>⚠️ Weak Topic Analysis</h2>
-                <ul className="weak-list">
+            {/* ── WEAK TOPICS GRID ── */}
+            <div className="full-width-section">
+              <div className="weak-topics-container">
+                <div className="weak-topics-header">
+                  <h2>⚠️ Weak Topic Analysis</h2>
+                  <p>Topics requiring your immediate attention based on recent quizzes</p>
+                </div>
+                <div className="weak-topics-grid">
                   {(dashData?.weakTopics || [
-                    { topic: "Complete quizzes to", subject: "", accuracy: 0 },
-                    { topic: "see weak topics here", subject: "", accuracy: 0 },
+                    { topic: "Binary Trees", subject: "DSA", accuracy: 35 },
+                    { topic: "Deadlocks", subject: "OS", accuracy: 42 },
+                    { topic: "Normalization", subject: "DBMS", accuracy: 50 },
+                    { topic: "TCP/IP", subject: "CN", accuracy: 55 },
                   ]).slice(0, 4).map((t, i) => (
-                    <li className="weak-item" key={i}>
-                      <span style={{ flex: 1, fontSize: 13 }}>
-                        {t.subject ? `${t.subject} — ` : ""}{t.topic}
-                      </span>
-                      {t.accuracy > 0 && (
-                        <>
-                          <div className="weak-bar-wrap">
-                            <div className="weak-bar" style={{ width: `${t.accuracy}%` }} />
-                          </div>
-                          <span style={{ fontSize: 12, color: "#ff6b6b", fontWeight: 700, minWidth: 32, textAlign: "right" }}>
+                    <div className="weak-topic-card" key={i}>
+                      <div className="wt-header">
+                        <span className="wt-subject">{t.subject || "General"}</span>
+                        {t.accuracy > 0 && (
+                          <span className={`wt-accuracy ${t.accuracy < 40 ? 'critical' : 'warning'}`}>
                             {t.accuracy}%
                           </span>
-                        </>
+                        )}
+                      </div>
+                      <h3 className="wt-title">{t.topic}</h3>
+                      {t.accuracy > 0 && (
+                        <div className="wt-progress-wrap">
+                          <div 
+                            className={`wt-progress ${t.accuracy < 40 ? 'critical' : 'warning'}`} 
+                            style={{ width: `${t.accuracy}%` }} 
+                          />
+                        </div>
                       )}
-                    </li>
+                      <Link to="/subjects" className="wt-practice-btn">Review Topic →</Link>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           </>

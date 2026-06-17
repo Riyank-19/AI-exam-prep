@@ -45,11 +45,11 @@ export const apiExplain = (topic, subject) =>
     body: JSON.stringify({ topic, subject }),
   }).then((r) => r.json());
 
-export const apiStudyPlan = (examDate, weakTopics) =>
+export const apiStudyPlan = (startDate, examDate, weakTopics) =>
   fetch(`${BASE_URL}/chat/study-plan`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({ examDate, weakTopics }),
+    body: JSON.stringify({ startDate, examDate, weakTopics }),
   }).then((r) => r.json());
 
 // ─── Quiz ────────────────────────────────────────────────────────────────────
