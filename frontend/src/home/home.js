@@ -276,9 +276,11 @@ const Home = () => {
             </p>
             <div className="contact-actions">
               <a href="mailto:pp50646464@gmail.com" className="contact-btn">
+                <a href="mailto:riyankpatel9925@gmail.com" className="contact-btn"></a>
                 📧 Email Us
               </a>
               <a href="tel:+919328761976" className="contact-btn secondary">
+                <a href="tel:+916356513953" className="contact-btn secondary"></a>
                 📞 Call Us
               </a>
             </div>
